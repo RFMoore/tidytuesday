@@ -52,7 +52,7 @@ ggplot(subset(long_crops, code == "USA"),
 usa_bananas <- long_crops %>%
         filter(crop == "Bananas", code == "USA") 
 
-ggplot(usa_bananas, aes(x = year, y = crop_production))                         + geom_line()                                                                 + geom_text(aes(label = year))
+ggplot(usa_bananas, aes(x = year, y = crop_production))                         + geom_line()                                                                + geom_text(aes(label = year))
 
 # WHY? Difficultly subsetting based on two conditions in ggplot, so filtered at the dataset level
 # + geom_text(aes(label = year)) - enabled identification of 1983 and 2016 as banana production drop years
@@ -89,8 +89,15 @@ global_bananas <- long_crops %>%
         
          # mini answer - Average global banana crop production for 1982 was 13            .9. Whereas global banana crop production for 1983 was 13.5. Yes,             there was a global banana crop shortfall in 1983.
         
+        global_banana_avg <- long_crops %>%
+                filter(crop == "Bananas") %>%
+                na.omit(crop) %>%
+                group_by(year) %>%
+                summarize(global_avg = mean(crop_production)) # How do I convert "global_avg" as an entity and keep the numeric values as crop_production?
+                
+                
         
-        
+        ggplot(global_banana_avg, aes(x = year, y = global_avg))                        + geom_line()                                                    
         
 ggplot(global_bananas, aes(x = year, y = crop_production))                      + geom_line(aes(group = code))                                                + facet_wrap(~code)
 
