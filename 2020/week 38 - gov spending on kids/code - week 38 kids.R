@@ -10,9 +10,24 @@ tuesdata <- tidytuesdayR::tt_load(2020, week = 38)
 
 kids <- tuesdata$kids
 
+# Install new packages
+# install.packages("forcats")
+#install.packages("cowplot")
+#install.packages("googleway")
+#install.packages("ggrepel")
+#install.packages("ggspatial")
+#install.packages("libwgeom")
+#install.packages("sf")
+#install.packages("rnaturalearth")
+#install.packages("rnaturalearthdata")
+#install.packages("usmap")
+
 # Load library
 library(tidyverse)
-
+library(forcats)
+library(usmap)
+#library(sf)
+theme_set(theme_bw())
 
 # Preview data
 kids
@@ -68,15 +83,38 @@ p + ggtitle("Public Health spending per child 1997-2016",
         xlab("Year") + 
         ylab("Inflation-adjusted spending per child (in thousands)") 
 
-        # Further questions:
+        # Current line graph answers the question, but raises more questions:
                 # What states have the greatest change in spending (all time)?
                 # What states are spending the most on PH (all time)?
                 # What states are spending the most on PH (current)?
 
+
         # What states have the greatest change in spending (all time)?
 
+        # ATTEMPT 1:
 
-p <- ggplot(ph, aes(x = fct_reorder(state, inf_adj_perchild, FUN = median, .desc = TRUE), y = inf_adj_perchild)) + 
+ph_mm <- kids %>%
+filter(variable == "pubhealth") %>%
+group_by(state) %>%
+mutate(max_iap = max(inf_adj_perchild), # new column min per state
+      min_iap = min(inf_adj_perchild)) # new column max per state
+
+        # LEARNING: 
+        # mutate rather than summarize to keep original data table
+        # summarize(var == on max(var) converts to element-wise comparison 
+        # giving "TRUE"/"FALSE" for all values
+        # As long as there is a "," or a "+" can line break but maintain code
+
+        # RESULT: Boxplots are significantly simpler for showing ranges rather 
+        # than calculating and displaying MIN & MAX
+
+
+        # ATTEMPT 2: 
+
+p <- ggplot(ph, aes(x = fct_reorder(state, inf_adj_perchild, #reorder = no desc
+                                    .fun = median, # reorder = FUN
+                                    .desc =TRUE), 
+                    y = inf_adj_perchild)) + 
         geom_boxplot() 
 
 p + ggtitle("Public Health spending per child 1997-2016",
@@ -84,19 +122,23 @@ p + ggtitle("Public Health spending per child 1997-2016",
         xlab("Year") + 
         ylab("Inflation-adjusted spending per child (in thousands)") 
 
+        # RESULT: Descending order boxplots by State. Interested in the 
+        # concept of "range" & showing variation in child expenditure, but  
+        # have lost time component with boxplots. Next attempt small-multiple 
+        # maps
 
-# CODE THAT I LEARNED SOMETHING FROM BUT TURNED OUT WRONG
 
-# What states have the greatest change in spending (all time)?
+        # ATTEMPT 3:
+ph <- kids %>%
+        filter(variable == "pubhealth" )
 
-#ph_mm <- kids %>%
-        #filter(variable == "pubhealth") %>%
-        #group_by(state) %>%
-        #mutate(max_iap = max(inf_adj_perchild), # new column min per state
-         #      min_iap = min(inf_adj_perchild)) # new column max per state
+plot_usmap(data = ph, 
+           values = "inf_adj_perchild", 
+           color = "grey") + 
+        scale_fill_continuous(low = "white",
+                              high = "black",
+                              name = "Spending per child", 
+                              label = scales::comma) + 
+        theme(legend.position = "right") + 
+        facet_wrap(~ year)
 
-        # LEARNING: 
-        # mutate rather than summarize to keep original data table
-        # summarize(var == on max(var) converts to element-wise comparison 
-                # giving "TRUE"/"FALSE" for all values
-        # As long as there is a "," or a "+" can line break but maintain code
