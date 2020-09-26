@@ -50,7 +50,8 @@ friends %>%
         group_by(speaker) %>% # "sort" giving error: "object not found error"
         distinct(speaker)
 
-        # RESULT: 700 different characters referenced, 67,373 utterances.              Limit to 6 main characters.
+        # RESULT: 700 different characters referenced, 67,373 utterances. 
+        # Limit to 6 main characters.
 
 friends %>%
         group_by(speaker) %>%
@@ -76,7 +77,9 @@ f_count <- friends %>%
                        speaker == "Phoebe Buffay" |
                        speaker == "Ross Geller" |
                        speaker == "Rachel Green") %>%
-        add_count(speaker, season, name = "utterance_season") # New count is         unassigned. By changing "count" to "add_count" create a new variable           within original dataset and assign a name.
+        add_count(speaker, season, name = "utterance_season") # New count is 
+        # unassigned. By changing "count" to "add_count" create a new variable 
+        # within original dataset and assign a name.
 
 
 p <- ggplot(f_count, aes(x = season, y = utterance_season, color = speaker)) + 
@@ -89,24 +92,3 @@ p + ggtitle("I tend to keep talking until somebody stops me",
         xlab("Season") + 
         ylab("Dialogue") + 
         labs(colour = "Character") 
-
-
-
-# Failed attempt: Re-order the Friends character by couple, then apply the PAIRED color scheme. Could either re-order, or apply color_brewer.  Not both.
-
-        #scale_color_discrete(breaks=c("Monica Geller", "Chandler Bing", "Phoebe Buffay", "Joey Tribbiani", "Rachel Green", "Ross Geller")) + # Order by couples
-
-
-# Semi-learned:
-        # Better at reviewing the available variables, defining a research              question, and breaking it down into smaller questions
-        # Improved code structure: In line comments for new learning, two line         breaks for sub-components, RESULTS highlighted
-        # FUNCTION add-count: Creating a new summary variable, assigning it a           name, and adding it to the main dataset
-        # FUNCTION scale_x_continuous: Analyst defined axis major break
-        # PACKAGES colour_brewer and viridis, they are beautiful defaults
-        
-                
-# Need to learn:
-        # How to use line breaks more effectively
-        # Adding READ.md file within Git for new R scripts
-        # More graceful ways to filter multiple variables beyond many ==
-        # Although I was able to re-order the Friends characters into couples         (from alphabetical), I was not able to apply the desired color scheme          (darker for men, lighter for female of red, green, and blue).  Instead          could do one or the other. Investigate how to target color scheme.
