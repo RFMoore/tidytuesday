@@ -88,7 +88,7 @@ p <- ggplot(f_count, aes(x = season, y = utterance_season, color = speaker)) +
         scale_colour_brewer(palette = "Set1")  # Rainbow color - see "To Learn"
 
 p + ggtitle("I tend to keep talking until somebody stops me", 
-            subtitle = "Frequency of dialogue by Friends character per season") + 
+    subtitle = "Frequency of dialogue by Friends character per season") + 
         xlab("Season") + 
         ylab("Dialogue") + 
         labs(colour = "Character") 
