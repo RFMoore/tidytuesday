@@ -1,4 +1,4 @@
-# Get the Data
+# GET THE DATA
 
 # Read in with tidytuesdayR package 
 # Install from CRAN via: install.packages("tidytuesdayR")
@@ -10,8 +10,8 @@ tuesdata <- tidytuesdayR::tt_load(2020, week = 38)
 
 kids <- tuesdata$kids
 
-# Install new packages
-# install.packages("forcats")
+# INSTALL NEW PACKAGES
+#install.packages("forcats")
 #install.packages("cowplot")
 #install.packages("googleway")
 #install.packages("ggrepel")
@@ -22,27 +22,33 @@ kids <- tuesdata$kids
 #install.packages("rnaturalearthdata")
 #install.packages("usmap")
 
-# Load library
+# LOAD LIBRARIES
 library(tidyverse)
 library(forcats)
 library(usmap)
 #library(sf)
 theme_set(theme_bw())
 
-# Preview data
+# PREVIEW
 kids
 glimpse(kid)
+# Full code book: https://jrosen48.github.io/tidykids/articles/tidykids-codebook.html
+# "variable" has 35 different categories including: 
+# "pubhealth": Public spending on public health efforts by state and year, in $1,000s. Data are from the Census Bureau's annual State and Local Government Finance Survey, expenditure variable E32.
+# "other_health": Public spending on health vendor payments and public hospitals, excluding Medicaid, by state and year, in $1,000s. Data are from the Census Bureau's annual State and Local Government Finance Survey, expenditure variables E74 and E36 less Medicaid_CHIP. Data are missing for 1997.
+# "inf_adj" refers to the amount transformed to be in 2016 dollars for each year spent
+# "inf_adj_per_child" refers to the amount transformed to be in 2016 dollars for each year per child in $1000s spent
 
 
-# Research question:
-# How has public health spending per child changed over time in the United States adjusting for inflation?
-        # Sub-components:
-        # What is the public health spending per child in VA for 2016?
-        # What is the public health spending per child in VA across time?
-        # BONUS: All states across time
+# RESEARCH QUESTION:
+# Standardized for inflation and number of children (inf_adj_per_child), how has public health spending in Virginia changed over time?
+        # SUB-COMPONENTS: 
+        # What is the public health spending in Virginia in 2016 (adj/child)?
+        # What is the public health spending for all years (adj/child)?
+        # BONUS: All states
 
 
-# Sub-component 1: What is the public health spending per child for 2016 in VA?
+# SUB-COMPONENT 1: What is the public health spending in Virginia in 2016 (adj/child)?
 
 kids %>%
         filter(variable == "pubhealth" & state == "Virginia" & year == "2016")
@@ -51,7 +57,7 @@ kids %>%
         # Virginia in 2016.
 
 
-# Sub-component 2: What is the public health spending per child in VA across time?
+# SUB-COMPONENT 2: What is the public health spending for all years (adj/child)?
 
 va_ph <- kids %>%
         filter(variable == "pubhealth" & state == "Virginia")
@@ -63,25 +69,27 @@ p + ggtitle("Public Health spending per child in Virginia 1997-2016") +
         xlab("Year") + 
         ylab("2016 inflation-adjusted spending per child (in thousands)") 
         
-        # RESULT: Positive growth in public health spending for children 
+        # RESULT: Positive growth in public health spending for children in VA
         # adjusted for inflation. Double peaked, with an intermediate peak 2005
-        # -2006 and highest peak in 2016.
+        # -2006 and second higer peak 2013-2016.
+        # FURTHER QUESTION: Why two large rises? Does this have to do with who 
+        # is in the Governor position?
 
 
-# Sub-component 3: BONUS - All states across time
+# SUB-COMPONENT 3: BONUS - All states 
 ph <- kids %>%
         filter(variable == "pubhealth")
 
 p <- ggplot(ph, aes(x = year, y = inf_adj_perchild)) + 
         geom_line() + 
-        #facet_wrap(~ state) # Small multiple
         facet_grid(. ~ state) #all states become columns 
         #facet_grid(state ~ .) # all states become rows
 
 p + ggtitle("Public Health spending per child 1997-2016",
             subtitle = "Adjusted for inflation (2016)") + 
         xlab("Year") + 
-        ylab("Inflation-adjusted spending per child (in thousands)") 
+        ylab("Inflation-adjusted spending per child (in thousands)") +
+        theme(legend.position = "none") # Remove legend to give wider preview
 
         # Current line graph answers the question, but raises more questions:
                 # What states have the greatest change in spending (all time)?
@@ -124,21 +132,32 @@ p + ggtitle("Public Health spending per child 1997-2016",
 
         # RESULT: Descending order boxplots by State. Interested in the 
         # concept of "range" & showing variation in child expenditure, but  
-        # have lost time component with boxplots. Next attempt small-multiple 
+        # have lost "time" component with boxplots. Next attempt small-multiple
         # maps
 
 
-        # ATTEMPT 3:
+        # ATTEMPT 3: Final plot
 ph <- kids %>%
         filter(variable == "pubhealth" )
 
 plot_usmap(data = ph, 
-           values = "inf_adj_perchild", 
-           color = "grey") + 
-        scale_fill_continuous(low = "white",
-                              high = "black",
-                              name = "Spending per child", 
-                              label = scales::comma) + 
-        theme(legend.position = "right") + 
-        facet_wrap(~ year)
+           values = "inf_adj_perchild",
+           color = "grey45") + # map border color
+        
+        # Aesthetics: Color palette and legend
+        scale_fill_distiller(palette = "YlGnBu", 
+                             direction = 1, # reverse color scale
+                             "Spending per child \n(USD in thousands)") + #\n line break in legend title
+        theme(legend.position = "bottom") +
+        
+        # Wrapping maps
+        facet_wrap(~ year) +
+        theme(strip.background = element_rect(colour = NA, fill = NA)) + # eliminates plot title boxes
+        
+        # Title & sub-title
+        labs(title = "Public Health spending per child in the United States 1997-2016",
+             subtitle = "Absolute spending, adjusted for inflation (2016)") 
 
+        # Not able complete in timeframe:
+        # Relative change in spending year-on-year per State (e.g. Red if 
+          # decreasing spending on children, Blue is increased)
