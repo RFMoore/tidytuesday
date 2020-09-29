@@ -12,16 +12,27 @@ peaks <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidy
 
 
 # INSTALL NEW PACKAGES
-install.packages("janitor")
-install.packages("skimr")
+#install.packages("janitor")
+#install.packages("skimr")
+#install.packages("ggbeeswarm")
+#install.packages("ggcorrplot")
+#install.packages("gganimate")
+#install.packages("gifski")
 
 # LIBRARIES
 library(tidyverse)
 library(janitor)
 library(skimr)
+library(ggbeeswarm)
+library(ggcorrplot)
+library(viridis)
+library(gganimate)
+library(gifski)
+
+theme_set(theme_light()) # sets a default ggplot theme
 
 
-# CLEANING
+# CLEANING - courtesy of Alex Cookson
 # Peaks
 peaks <- read_csv("./himalayan-expeditions/raw/peaks.csv") %>%
         transmute(
@@ -216,8 +227,187 @@ members %>%
 members %>%
         filter(peak_name == "Everest" & injured == "TRUE") 
 
+# All in one line, black transparency to show density
 ggplot(members, aes(x = injury_type, y = injury_height_metres)) + 
-geom_point(alpha = 1/10) # transparency
+        geom_point(alpha = 1/10) # transparency
 
-        # Desired - size or color for density
+# Beeswarm - horizontal lining to show density
+ggplot(members, aes(x = injury_type, y = injury_height_metres)) + 
+        geom_beeswarm()
 
+# Jitter the data points (lose specificty elevation) to show density
+ggplot(members, aes(x = injury_type, y = injury_height_metres)) + 
+        geom_quasirandom() 
+
+# Violin plot - width to show density
+ggplot(members, aes(x = injury_type, y = injury_height_metres)) + 
+        geom_violin()
+
+# dot color/size density - inversed colors
+ggplot(members, aes(x = injury_type, y = injury_height_metres)) + 
+        geom_count(aes(color = ..n.., size = ..n..), # ..n.. = computed var
+                   alpha = .7) + # transparency
+        guides(color = 'legend') + #display color as legend
+        scale_size_area(max_size = 10)
+
+# Color based on count variable
+count <- members %>%
+        filter(peak_name == "Everest" & injured == "TRUE") %>%
+        group_by(injury_type, injury_height_metres) %>%
+        summarise(count = n()) 
+
+        ggplot(count, aes(injury_type, injury_height_metres, color=count)) +
+        geom_point(size = 5, 
+                   alpha = .6,
+                   method = "lm", 
+                   show.legend = FALSE) +
+        scale_color_viridis(direction = -1)
+
+# Color based on count, jittered
+ggplot(count, aes(injury_type, injury_height_metres, color=count)) +
+        geom_quasirandom(size = 2, cex = 2) + 
+        scale_color_viridis(direction = -1)
+        
+
+count_yr <- members %>%
+        filter(peak_name == "Everest" & injured == "TRUE") %>%
+        group_by(injury_type, injury_height_metres, year) %>%
+        summarise(count = n()) 
+
+# Injuries by year (attempt to animate)
+ggplot(count_yr, aes(injury_type, injury_height_metres, size = count, frame = year)) +
+        geom_point() +
+        geom_smooth(aes(group = year), 
+                    method = "lm", 
+                    show.legend = FALSE) +
+        facet_wrap(~injury_type, scales = "free") +
+        #scale_x_log10()  # convert to log scale
+
+gganimate(g, interval=0.2)
+
+# Aggregate injury elevation from rounded to 10's place to rounded to 100's
+
+
+
+r_members <- members %>%
+        filter(peak_name == "Everest" & injured == "TRUE") %>%
+        mutate(ihm_100s = round(injury_height_metres, digits = -2))
+
+glimpse(r_members)
+
+# All in one line, black transparency to show density
+ggplot(r_members, aes(x = injury_type, y = ihm_100s)) + 
+        geom_point(alpha = 1/10) # transparency
+
+# Beeswarm - horizontal lining to show density
+ggplot(r_members, aes(x = injury_type, y = ihm_100s)) + 
+        geom_beeswarm()
+
+# Jitter the data points (lose specificty elevation) to show density
+ggplot(r_members, aes(x = injury_type, y = ihm_100s)) + 
+        geom_quasirandom() 
+
+# Violin plot - width to show density
+ggplot(r_members, aes(x = injury_type, y = ihm_100s)) + 
+        geom_violin()
+
+# dot color/size density - inversed colors
+ggplot(r_members, aes(x = injury_type, y = ihm_100s)) + 
+        geom_count(aes(color = ..n.., size = ..n..), # ..n.. = computed var
+                   alpha = .7) + # transparency
+        guides(color = 'legend') + #display color as legend
+        scale_size_area(max_size = 10)
+
+# Color based on count variable
+count <- r_members %>%
+        filter(peak_name == "Everest" & injured == "TRUE") %>%
+        group_by(injury_type, ihm_100s) %>%
+        summarise(count = n()) 
+
+ggplot(count, aes(injury_type, ihm_100s, color=count)) +
+        geom_point(size = 5, 
+                   alpha = .6,
+                   method = "lm", 
+                   show.legend = FALSE) +
+        scale_color_viridis(direction = -1)
+
+# Color based on count, jittered
+ggplot(count, aes(injury_type, ihm_100s, color=count)) +
+        geom_quasirandom(size = 2, cex = 2) + 
+        scale_color_viridis(direction = -1)
+
+# Injuries by year (attempt to animate)
+count_yr <- r_members %>%
+        filter(peak_name == "Everest" & injured == "TRUE") %>%
+        group_by(injury_type, ihm_100s, year) %>%
+        summarise(count = n()) 
+
+
+ggplot(count_yr, aes(injury_type, ihm_100s, size = count, frame = year)) +
+        geom_point() +
+        geom_smooth(aes(group = year), 
+                    method = "lm", 
+                    show.legend = FALSE) +
+        facet_wrap(~injury_type, scales = "free") +
+        #scale_x_log10()  # convert to log scale
+        
+        gganimate(g, interval=0.2)
+
+
+#MOVE FORWARD WITH VIOLIN AND DOT DENSITY
+
+r_members <- members %>%
+        filter(injured == "TRUE") %>%
+        mutate(ihm_100s = round(injury_height_metres/250)*250)
+
+glimpse(r_members)
+
+# Violin plot - width to show density
+ggplot(count, aes(x = injury_type, y = ihm_100s)) + 
+        geom_violin()
+
+# dot color/size density - inversed colors
+p <- ggplot(r_members, aes(x = injury_type, y = ihm_100s)) + 
+        geom_count(aes(color = ..n.., size = ..n..), # ..n.. = computed var
+                   alpha = .7) + # transparency
+        guides(color = 'legend') + #display color as legend
+        scale_size_area(max_size = 10) 
+
+# Titles
+p + labs(title = "Injury in the Himalayas by elevation", 
+         x = "Injury type",
+         y = "Injury height (meters)",
+         #fill = "Number of injuries",
+         caption = "Source: The Himalayan Database") 
+
+# dot color/size density - inversed colors
+count <- r_members %>%
+        filter(injured == "TRUE") %>%
+        group_by(injury_type, ihm_100s) %>%
+        summarise(count = n()) %>%
+        drop_na()
+
+p <- ggplot(count, aes(x = injury_type, y = ihm_100s, color = count, size = count)) + 
+        geom_point(alpha = .7) + # transparency
+        guides(color = 'legend') + #display color/size as legend
+        scale_size_area(max_size = 10) 
+
+# Titles
+p + labs(title = "Injury in the Himalayas by elevation", 
+         x = "Injury type",
+         y = "Injury height (meters)",
+         #fill = "Number of injuries",
+         caption = "Source: The Himalayan Database") 
+
+# Color based on count variable
+count <- r_members %>%
+        filter(injured == "TRUE") %>%
+        group_by(injury_type, ihm_100s) %>%
+        summarise(count = n()) 
+
+ggplot(count, aes(injury_type, ihm_100s, color=count)) +
+        geom_point(size = 5, 
+                   alpha = .6,
+                   method = "lm", 
+                   ) + #show.legend = FALSE
+        scale_color_viridis(direction = -1)
